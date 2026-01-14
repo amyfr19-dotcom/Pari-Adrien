@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Pari Adrien - Pro Edition</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: white; text-align: center; margin: 0; padding: 20px; }
+        .stats-bar { background: #222; padding: 15px; border-radius: 50px; display: inline-flex; gap: 30px; margin-bottom: 30px; border: 2px solid #ffcc00; box-shadow: 0 0 15px rgba(255, 204, 0, 0.3); }
+        .wallet { color: #00ff88; font-weight: bold; font-size: 1.2em; }
+        .container { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+        .card { background: #1e1e1e; padding: 20px; border-radius: 15px; width: 220px; border: 1px solid #444; transition: 0.3s; }
+        .card:hover { transform: translateY(-5px); border-color: #ffcc00; }
+        .odd-display { font-size: 2em; color: #ffcc00; margin: 10px 0; }
+        button { background: #ffcc00; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
+        button:hover { background: #e6b800; }
+        input { width: 80%; padding: 8px; margin-bottom: 10px; background: #333; border: 1px solid #555; color: white; text-align: center; border-radius: 5px; }
+        .result-btn { background: #ff4444; margin-top: 40px; width: auto; padding: 15px 40px; font-size: 1.1em; }
+        #message { margin-top: 20px; font-weight: bold; font-size: 1.2em; min-height: 1.5em; }
+    </style>
+</head>
+<body>
+
+    <h1>🏍️ Adrien Crash Predictor</h1>
+
+    <div class="stats-bar">
+        <div>Total Enjeux : <span id="total-pool">0</span> €</div>
+        <div class="wallet">Ton Portefeuille : <span id="user-wallet">500.00</span> €</div>
+    </div>
+
+    <div class="container" id="events-container"></div>
+
+    <button class="result-btn" onclick="simulerAccident()">⚡ QU'EST-IL ARRIVÉ À ADRIEN ? ⚡</button>
+    <div id="message"></div>
+
+    <script>
+        let wallet = 500.00;
+        let totalPool = 2000; // Base fictive pour stabiliser les cotes au début
+        let events = [
+            { id: 'highside', name: 'Highside Brutal', pool: 500, myBet: 0 },
+            { id: 'collision', name: 'Collision voiture', pool: 500, myBet: 0 },
+            { id: 'camion', name: 'Rencontre Camion', pool: 500, myBet: 0 },
+            { id: 'lowside', name: 'Lowside Classique', pool: 500, myBet: 0 }
+        ];
+
+        function updateUI() {
+            const container = document.getElementById('events-container');
+            container.innerHTML = '';
+            document.getElementById('total-pool').innerText = totalPool.toFixed(2);
+            document.getElementById('user-wallet').innerText = wallet.toFixed(2);
+
+            events.forEach(event => {
+                let odd = (totalPool / event.pool).toFixed(2);
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <h3>${event.name}</h3>
+                    <div class="odd-display">x${odd}</div>
+                    <p>Tes mises : ${event.myBet} €</p>
+                    <input type="number" id="input-${event.id}" placeholder="Somme (€)" min="1">
+                    <button onclick="placeBet('${event.id}')">Parier</button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function placeBet(eventId) {
+            const input = document.getElementById(`input-${eventId}`);
+            const amount = parseFloat(input.value);
+            
+            if (isNaN(amount) || amount <= 0) return;
+            if (amount > wallet) {
+                document.getElementById('message').innerText = "❌ Pas assez d'argent !";
+                return;
+            }
+
+            const event = events.find(e => e.id === eventId);
+            wallet -= amount;
+            event.myBet += amount;
+            event.pool += amount;
+            totalPool += amount;
+
+            document.getElementById('message').innerText = `✅ ${amount}€ misés sur ${event.name}`;
+            updateUI();
+        }
+
+        function simulerAccident() {
+            const totalBets = events.reduce((sum, e) => sum + e.myBet, 0);
+            if (totalBets === 0) {
+                document.getElementById('message').innerText = "⚠️ Parie d'abord avant de l'envoyer au tapis !";
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * events.length);
+            const winner = events[randomIndex];
+            const oddAtTime = (totalPool / winner.pool);
+            const winAmount = winner.myBet * oddAtTime;
+
+            if (winAmount > 0) {
+                wallet += winAmount;
+                document.getElementById('message').innerHTML = `<span style="color:#00ff88">🎉 VICTOIRE ! Adrien a fait un ${winner.name}. Tu gagnes ${winAmount.toFixed(2)}€ !</span>`;
+            } else {
+                document.getElementById('message').innerHTML = `<span style="color:#ff4444">💀 PERDU ! Il a fait un ${winner.name} mais tu n'avais rien misé dessus.</span>`;
+            }
+
+            // Réinitialisation des paris après l'accident
+            events.forEach(e => e.myBet = 0);
+            updateUI();
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
