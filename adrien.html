@@ -2,25 +2,33 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Pari Adrien - Pro Edition</title>
+    <title>Pari d'Adrien : Édition Royale</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: white; text-align: center; margin: 0; padding: 20px; }
-        .stats-bar { background: #222; padding: 15px; border-radius: 50px; display: inline-flex; gap: 30px; margin-bottom: 30px; border: 2px solid #ffcc00; box-shadow: 0 0 15px rgba(255, 204, 0, 0.3); }
-        .wallet { color: #00ff88; font-weight: bold; font-size: 1.2em; }
-        .container { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
-        .card { background: #1e1e1e; padding: 20px; border-radius: 15px; width: 220px; border: 1px solid #444; transition: 0.3s; }
-        .card:hover { transform: translateY(-5px); border-color: #ffcc00; }
-        .odd-display { font-size: 2em; color: #ffcc00; margin: 10px 0; }
-        button { background: #ffcc00; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
-        button:hover { background: #e6b800; }
-        input { width: 80%; padding: 8px; margin-bottom: 10px; background: #333; border: 1px solid #555; color: white; text-align: center; border-radius: 5px; }
-        .result-btn { background: #ff4444; margin-top: 40px; width: auto; padding: 15px 40px; font-size: 1.1em; }
-        #message { margin-top: 20px; font-weight: bold; font-size: 1.2em; min-height: 1.5em; }
+        body { font-family: 'Georgia', serif; background: linear-gradient(to bottom, #1a1a1a, #0a0a0a); color: #e0e0e0; text-align: center; margin: 0; padding: 20px; }
+        .header { background: #2c2c2c; padding: 25px; margin-bottom: 30px; border-bottom: 3px solid #ffd700; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        h1 { color: #ffd700; font-size: 3em; margin: 0; text-shadow: 2px 2px 5px rgba(255, 215, 0, 0.4); }
+        h1 span { font-style: italic; font-weight: normal; color: #bbb; font-size: 0.6em; }
+        .stats-bar { background: #3c3c3c; padding: 15px; border-radius: 50px; display: inline-flex; gap: 30px; margin-bottom: 30px; border: 2px solid #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); }
+        .wallet { color: #98fb98; font-weight: bold; font-size: 1.2em; }
+        .container { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 30px; }
+        .card { background: #282828; padding: 20px; border-radius: 15px; width: 220px; border: 1px solid #555; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .card:hover { transform: translateY(-5px); border-color: #ffd700; box-shadow: 0 8px 20px rgba(255, 215, 0, 0.3); }
+        .odd-display { font-size: 2.2em; color: #ffd700; margin: 10px 0; font-weight: bold; }
+        button { background: #ffd700; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; color: #1a1a1a; }
+        button:hover { background: #e6c200; transform: scale(1.02); }
+        input { width: 80%; padding: 8px; margin-bottom: 10px; background: #444; border: 1px solid #666; color: white; text-align: center; border-radius: 5px; }
+        .result-btn { background: #ff4444; margin-top: 40px; width: auto; padding: 15px 40px; font-size: 1.1em; border-radius: 10px; box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4); }
+        .result-btn:hover { background: #e63939; }
+        #message { margin-top: 20px; font-weight: bold; font-size: 1.3em; min-height: 1.5em; }
+        .chart-container { background: #282828; padding: 20px; border-radius: 15px; width: 80%; max-width: 700px; margin: 40px auto; border: 1px solid #555; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-    <h1>🏍️ Adrien Crash Predictor</h1>
+    <div class="header">
+        <h1>🏍️ Adrien Crash Predictor <span>Édition Royale</span></h1>
+    </div>
 
     <div class="stats-bar">
         <div>Total Enjeux : <span id="total-pool">0</span> €</div>
@@ -32,21 +40,53 @@
     <button class="result-btn" onclick="simulerAccident()">⚡ QU'EST-IL ARRIVÉ À ADRIEN ? ⚡</button>
     <div id="message"></div>
 
+    <div class="chart-container">
+        <h2>Répartition des mises</h2>
+        <canvas id="poolChart"></canvas>
+    </div>
+
     <script>
         let wallet = 500.00;
-        let totalPool = 2000; // Base fictive pour stabiliser les cotes au début
+        // On initialise avec une base plus élevée pour des cotes plus stables au départ
+        let totalPool = 5000; 
         let events = [
-            { id: 'highside', name: 'Highside Brutal', pool: 500, myBet: 0 },
-            { id: 'collision', name: 'Collision voiture', pool: 500, myBet: 0 },
-            { id: 'camion', name: 'Rencontre Camion', pool: 500, myBet: 0 },
-            { id: 'lowside', name: 'Lowside Classique', pool: 500, myBet: 0 }
+            { id: 'highside', name: 'Highside Brutal', pool: 1000, myBet: 0 },
+            { id: 'collision', name: 'Collision avec un Carrosse Royal', pool: 1000, myBet: 0 },
+            { id: 'camion', name: 'Percuté par un Camion de Pompiers Royaux', pool: 1000, myBet: 0 },
+            { id: 'lowside', name: 'Lowside Classique', pool: 1000, myBet: 0 },
+            { id: 'coronation', name: 'Blessé lors du Couronnement', pool: 500, myBet: 0 }, // Improbable, cote haute
+            { id: 'falcon', name: 'Attaque de Faucon Royal', pool: 500, myBet: 0 } // Improbable, cote haute
         ];
+
+        let poolChart; // Variable pour stocker l'instance du graphique
+
+        // Fonction pour sauvegarder l'état (portefeuille et mises)
+        function saveData() {
+            localStorage.setItem('adrienWallet', wallet.toFixed(2));
+            localStorage.setItem('adrienTotalPool', totalPool.toFixed(2));
+            localStorage.setItem('adrienEvents', JSON.stringify(events));
+        }
+
+        // Fonction pour charger l'état
+        function loadData() {
+            const savedWallet = localStorage.getItem('adrienWallet');
+            const savedTotalPool = localStorage.getItem('adrienTotalPool');
+            const savedEvents = localStorage.getItem('adrienEvents');
+
+            if (savedWallet) wallet = parseFloat(savedWallet);
+            if (savedTotalPool) totalPool = parseFloat(savedTotalPool);
+            if (savedEvents) events = JSON.parse(savedEvents);
+        }
 
         function updateUI() {
             const container = document.getElementById('events-container');
             container.innerHTML = '';
             document.getElementById('total-pool').innerText = totalPool.toFixed(2);
             document.getElementById('user-wallet').innerText = wallet.toFixed(2);
+
+            let chartLabels = [];
+            let chartData = [];
+            let chartColors = [];
 
             events.forEach(event => {
                 let odd = (totalPool / event.pool).toFixed(2);
@@ -55,19 +95,29 @@
                 card.innerHTML = `
                     <h3>${event.name}</h3>
                     <div class="odd-display">x${odd}</div>
-                    <p>Tes mises : ${event.myBet} €</p>
-                    <input type="number" id="input-${event.id}" placeholder="Somme (€)" min="1">
+                    <p>Tes mises : ${event.myBet.toFixed(2)} €</p>
+                    <input type="number" id="input-${event.id}" placeholder="Somme (€)" min="1" step="any">
                     <button onclick="placeBet('${event.id}')">Parier</button>
                 `;
                 container.appendChild(card);
+
+                chartLabels.push(event.name);
+                chartData.push(event.pool);
+                chartColors.push(getRandomColor()); // Générer une couleur aléatoire pour chaque segment
             });
+
+            updateChart(chartLabels, chartData, chartColors);
+            saveData(); // Sauvegarder les données à chaque mise à jour de l'UI
         }
 
         function placeBet(eventId) {
             const input = document.getElementById(`input-${eventId}`);
             const amount = parseFloat(input.value);
             
-            if (isNaN(amount) || amount <= 0) return;
+            if (isNaN(amount) || amount <= 0) {
+                document.getElementById('message').innerText = "❌ Entre un montant valide !";
+                return;
+            }
             if (amount > wallet) {
                 document.getElementById('message').innerText = "❌ Pas assez d'argent !";
                 return;
@@ -79,7 +129,8 @@
             event.pool += amount;
             totalPool += amount;
 
-            document.getElementById('message').innerText = `✅ ${amount}€ misés sur ${event.name}`;
+            document.getElementById('message').innerText = `✅ ${amount.toFixed(2)}€ misés sur ${event.name}`;
+            input.value = ''; // Vider le champ après avoir parié
             updateUI();
         }
 
@@ -90,23 +141,92 @@
                 return;
             }
 
-            const randomIndex = Math.floor(Math.random() * events.length);
-            const winner = events[randomIndex];
-            const oddAtTime = (totalPool / winner.pool);
-            const winAmount = winner.myBet * oddAtTime;
+            // Sélectionne le gagnant basé sur les poids des pools (plus le pool est gros, plus c'est probable)
+            let randomWeight = Math.random() * totalPool;
+            let winner = null;
+            for (let i = 0; i < events.length; i++) {
+                randomWeight -= events[i].pool;
+                if (randomWeight <= 0) {
+                    winner = events[i];
+                    break;
+                }
+            }
+            
+            // Si jamais le totalPool est 0 ou qu'il y a un bug, on prend un random classique
+            if (!winner) {
+                 const randomIndex = Math.floor(Math.random() * events.length);
+                 winner = events[randomIndex];
+            }
+
+
+            const oddAtTimeOfBet = (totalPool / winner.pool); // La cote est basée sur le pool total au moment de la résolution
+            const winAmount = winner.myBet * oddAtTimeOfBet;
 
             if (winAmount > 0) {
                 wallet += winAmount;
-                document.getElementById('message').innerHTML = `<span style="color:#00ff88">🎉 VICTOIRE ! Adrien a fait un ${winner.name}. Tu gagnes ${winAmount.toFixed(2)}€ !</span>`;
+                document.getElementById('message').innerHTML = `<span style="color:#98fb98">🎉 VICTOIRE ! Adrien a été victime d'un ${winner.name}. Tu gagnes ${winAmount.toFixed(2)}€ !</span>`;
             } else {
-                document.getElementById('message').innerHTML = `<span style="color:#ff4444">💀 PERDU ! Il a fait un ${winner.name} mais tu n'avais rien misé dessus.</span>`;
+                document.getElementById('message').innerHTML = `<span style="color:#ff6347">💀 PERDU ! Adrien a été victime d'un ${winner.name}, mais tu n'avais rien misé dessus.</span>`;
             }
 
-            // Réinitialisation des paris après l'accident
+            // Réinitialisation des paris de l'utilisateur après l'accident
             events.forEach(e => e.myBet = 0);
+            // On peut choisir de réinitialiser les pools ou de les laisser tel quel. Pour l'instant, on les garde.
             updateUI();
         }
 
+        // Fonction pour générer une couleur aléatoire pour le graphique
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        // Initialisation ou mise à jour du graphique
+        function updateChart(labels, data, colors) {
+            const ctx = document.getElementById('poolChart').getContext('2d');
+            if (poolChart) {
+                poolChart.data.labels = labels;
+                poolChart.data.datasets[0].data = data;
+                poolChart.data.datasets[0].backgroundColor = colors;
+                poolChart.update();
+            } else {
+                poolChart = new Chart(ctx, {
+                    type: 'doughnut', // Graphique en forme de beignet
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors,
+                            borderColor: '#121212',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#e0e0e0' // Couleur du texte de la légende
+                                }
+                            },
+                            title: {
+                                display: false,
+                                text: 'Répartition des Mises'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Chargement des données au démarrage
+        loadData();
+        // Initialisation de l'UI
         updateUI();
     </script>
 </body>
